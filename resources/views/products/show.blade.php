@@ -22,7 +22,7 @@
             <p>画像はありません</p>
         @endif
     </div>
-    <a href="{{ route('products.edit', $product->id) }}" class="btn btn-primary">編集</a>
+    <a href="{{ route('products.edit', $product->id) }}" class="btn btn-primary mt-3">編集</a>
     <a href="{{ route('products.index') }}" class="btn btn-secondary mt-3">戻る</a>
 </div>
 @endsection
