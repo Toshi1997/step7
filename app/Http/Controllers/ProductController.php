@@ -49,26 +49,28 @@ class ProductController extends Controller
     // 商品登録処理
     public function store(ProductRequest $request)
     {
-        $imagePath = null;
-        if ($request->hasFile('img_path')) {
-            // ディスク 'public' を指定し、"products" ディレクトリに保存
-            $filePath = $request->file('img_path')->store('products', 'public');
-            // DBには "storage/products/ファイル名" を保存
-            $imagePath = 'storage/' . $filePath;
+        try {
+            $imagePath = null;
+            if ($request->hasFile('img_path')) {
+                // ディスク 'public' に保存し、パスを取得
+                $filePath = $request->file('img_path')->store('products', 'public');
+                $imagePath = 'storage/' . $filePath;
+            }
+            // 商品をデータベースに保存
+            Product::create([
+                'product_name' => $request->product_name,
+                'price'        => $request->price,
+                'stock'        => $request->stock,
+                'company_id'   => $request->company_id,
+                'comment'      => $request->comment,
+                'img_path'     => $imagePath,
+            ]);
+
+            return redirect()->route('products.index')->with('success', '商品を登録しました！');
+        } catch (\Exception $e) {
+            // エラー発生時は元の画面に戻り、エラーメッセージを表示
+            return redirect()->back()->withErrors(['error' => '商品登録中にエラーが発生しました: ' . $e->getMessage()]);
         }
-
-        // 商品をデータベースに保存
-        Product::create([
-            'product_name' => $request->product_name,
-            'price'        => $request->price,
-            'stock'        => $request->stock,
-            'company_id'   => $request->company_id,
-            'comment'      => $request->comment,
-            'img_path'     => $imagePath, // "storage/products/ファイル名"
-        ]);
-
-        // 一覧ページへリダイレクト
-        return redirect()->route('products.index')->with('success', '商品を登録しました！');
     }
 
 
@@ -77,18 +79,22 @@ class ProductController extends Controller
     //商品を削除
     public function destroy($id)
     {
-        $product = Product::findOrFail($id);
+        try {
+            $product = Product::findOrFail($id);
 
-        // 商品画像が存在する場合、ストレージから削除
-        if ($product->img_path) {
-            $storagePath = str_replace('storage/', '', $product->img_path); // 'images/ファイル名' に変換
-            \Storage::disk('public')->delete($storagePath);
+            // 商品画像が存在する場合、ストレージから削除
+            if ($product->img_path) {
+                $storagePath = str_replace('storage/', '', $product->img_path);
+                \Storage::disk('public')->delete($storagePath);
+            }
+
+            // 商品データを削除
+            $product->delete();
+
+            return redirect()->route('products.index')->with('success', '商品を削除しました！');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => '削除中にエラーが発生しました: ' . $e->getMessage()]);
         }
-
-        // 商品データを削除
-        $product->delete();
-
-        return redirect()->route('products.index')->with('success', '商品を削除しました！');
     }
 
 
@@ -106,29 +112,29 @@ class ProductController extends Controller
     // 商品情報の更新処理
     public function update(ProductRequest $request, $id)
     {
-        $product = Product::findOrFail($id);
+        try {
+            $product = Product::findOrFail($id);
 
-        // 画像のアップロード処理
-        if ($request->hasFile('img_path')) {
-            // ディスク名 'public' を指定して「products」ディレクトリに保存
-            $filePath = $request->file('img_path')->store('products', 'public');
-            // => 実際の保存先: storage\app\public\products\ファイル名
-            // => $filePath = "products/ファイル名"
-            $imagePath = 'storage/' . $filePath; // DBには "storage/products/ファイル名" を保存
-            $product->img_path = $imagePath;
+            // 画像のアップロード処理（新しい画像がアップロードされた場合のみ）
+            if ($request->hasFile('img_path')) {
+                $filePath = $request->file('img_path')->store('products', 'public');
+                $product->img_path = 'storage/' . $filePath;
+            }
+
+            // 商品情報の更新
+            $product->update([
+                'product_name' => $request->product_name,
+                'price'        => $request->price,
+                'stock'        => $request->stock,
+                'company_id'   => $request->company_id,
+                'comment'      => $request->comment,
+            ]);
+
+            return redirect()->route('products.show', $product->id)
+                            ->with('success', '商品情報を更新しました！');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => '更新中にエラーが発生しました: ' . $e->getMessage()]);
         }
-
-        // 商品情報の更新
-        $product->update([
-            'product_name' => $request->product_name,
-            'price' => $request->price,
-            'stock' => $request->stock,
-            'company_id' => $request->company_id,
-            'comment' => $request->comment,
-            'img_path' => $product->img_path, // `storage/products/ファイル名`
-        ]);
-
-        return redirect()->route('products.show', $product->id)->with('success', '商品情報を更新しました！');
     }
 
 // ==============================================================

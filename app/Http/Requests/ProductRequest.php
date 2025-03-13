@@ -20,11 +20,11 @@ class ProductRequest extends FormRequest
     public function rules()
     {
         return [
-            'product_name' => 'required|max:255',
-            'company_id'   => 'required|exists:companies,id',
-            'price'        => 'required|integer|min:0',
-            'stock'        => 'required|integer|min:0',
-            'comment'      => 'max:10000',
+            'product_name' => 'required|max:255',// 商品名は必須、文字列、最大255文字
+            'company_id'   => 'required|exists:companies,id',// 企業IDは必須、companiesテーブルに存在すること
+            'price'        => 'required|integer|min:0',// 価格は必須、整数、0以上
+            'stock'        => 'required|integer|min:0',// 在庫は必須、整数、0以上
+            'comment'      => 'max:10000',// コメントは任意、文字列、最大10000文字
             'img_path'     => 'nullable|mimes:jpeg,png,jpg,gif|max:2048', // 画像ファイルのみ許可
         ];
     }
