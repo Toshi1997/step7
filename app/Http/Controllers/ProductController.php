@@ -28,8 +28,37 @@ class ProductController extends Controller
             $query->where('company_id', $request->company_id);
         }
 
+        //  価格範囲のフィルター
+        if ($request->filled('price_min')) {
+            $query->where('price', '>=', $request->input('price_min'));
+        }
+        if ($request->filled('price_max')) {
+            $query->where('price', '<=', $request->input('price_max'));
+        }
+
+        //  在庫数のフィルター
+        if ($request->filled('stock_min')) {
+            $query->where('stock', '>=', $request->input('stock_min'));
+        }
+        if ($request->filled('stock_max')) {
+            $query->where('stock', '<=', $request->input('stock_max'));
+        }
+
+        //  ソート処理の追加（sort_byとorderが指定されていれば適用）
+        $sortBy = $request->input('sort_by', 'id');      // デフォルトは'id'
+        $order = $request->input('order', 'asc');        // デフォルトは'asc'
+
+        $query->orderBy($sortBy, $order); // ソートを適用
+
         $products = $query->get();
 
+
+        // Ajax対応：部分ビューだけ返す
+        if ($request->ajax()) {
+            return view('products._product_table', compact('products'));
+        }
+
+        // 通常表示
         return view('products.index', compact('products', 'companies'));
     }
 
@@ -91,8 +120,19 @@ class ProductController extends Controller
             // 商品データを削除
             $product->delete();
 
+            //  Ajaxの場合はJSONを返す
+            if (request()->ajax()) {
+                return response()->json(['message' => '商品を削除しました！']);
+            }
+
+            // 通常の同期リクエスト時はリダイレクト
             return redirect()->route('products.index')->with('success', '商品を削除しました！');
+
         } catch (\Exception $e) {
+            if (request()->ajax()) {
+                return response()->json(['error' => '削除中にエラーが発生しました: ' . $e->getMessage()], 500);
+            }
+
             return redirect()->back()->withErrors(['error' => '削除中にエラーが発生しました: ' . $e->getMessage()]);
         }
     }
