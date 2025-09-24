@@ -14,7 +14,7 @@
         <h1>商品一覧</h1>
 
         <!-- 検索・フィルター機能 -->
-        <form action="{{ route('products.index') }}" method="GET" class="mb-3">
+        <form id="search-form" action="{{ route('products.index') }}" method="GET">
             <!-- 商品名検索 -->
             <div class="form-group">
                 <input type="text" name="keyword" class="form-control" placeholder="商品名で検索" value="{{ request('keyword') }}">
@@ -61,7 +61,7 @@
             </tr>
         </thead>
             <tbody id="product-table-body">
-                @include('products._product_table')
+                @include('products._product_table', ['products' => $products])
             </tbody>
         </table>
     </div>
@@ -109,17 +109,16 @@
             $('#search-form').on('submit', function (e) {
                 e.preventDefault(); // 通常のフォーム送信をキャンセル
 
-                const formData = $(this).serialize();
+                const form = $(this);
+                const formData = form.serialize();
 
                 $.ajax({
-                    url: '{{ route("products.index") }}',
+                    url: form.attr('action'),
                     type: 'GET',
                     data: formData,
                     dataType: 'html',
                     success: function (response) {
-                        // 一時的にHTMLをdivでラップしてからtbodyだけ取り出す
-                        const newBody = $('<div>').html(response).find('#product-table-body').html();
-                        $('#product-table-body').html(newBody);
+                        $('#product-table-body').html(response);
                     },
                     error: function () {
                         alert('検索に失敗しました。');
@@ -206,7 +205,7 @@
             const productId = $(this).data('product-id');
 
             $.ajax({
-                url: 'http://127.0.0.1:8000/api/purchase',
+                url: '{{ url("/api/purchase") }}',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({ product_id: productId }),

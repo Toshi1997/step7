@@ -4,41 +4,35 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Sale;
-use App\Models\Product; //  追加
+use Illuminate\Support\Facades\DB;
+use App\Models\Product;
 
 class SalesController extends Controller
 {
     public function store(Request $request)
     {
-        // バリデーション（product_id が必須で、productsテーブルに存在するIDであること）
         $request->validate([
             'product_id' => 'required|integer|exists:products,id',
         ]);
 
-        //  商品情報を取得
-        $product = Product::find($request->product_id);
+        try {
+            DB::beginTransaction();
 
-        //  在庫が0以下なら購入できない
-        if ($product->stock <= 0) {
+            $product = Product::findOrFail($request->product_id);
+            $sale = $product->processPurchase();
+
+            DB::commit();
+
             return response()->json([
-                'message' => '在庫がありません。購入できません。'
-            ], 400); // 400 Bad Request
+                'message' => '購入が完了しました。',
+                'sale_id' => $sale->id,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => '購入処理に失敗しました: ' . $e->getMessage(),
+            ], 500);
         }
-
-        //  在庫を1つ減らす
-        $product->stock -= 1;
-        $product->save();
-
-        //  salesテーブルに購入記録を追加
-        $sale = Sale::create([
-            'product_id' => $product->id,
-        ]);
-
-        //  レスポンス返却
-        return response()->json([
-            'message' => '購入が完了しました。',
-            'data' => $sale
-        ]);
     }
 }

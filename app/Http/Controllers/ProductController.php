@@ -55,7 +55,7 @@ class ProductController extends Controller
 
         // Ajax対応：部分ビューだけ返す
         if ($request->ajax()) {
-            return view('products._product_table', compact('products'));
+            return view('products._product_table', compact('products'))->render();
         }
 
         // 通常表示
