@@ -17,12 +17,13 @@
         <form id="search-form" action="{{ route('products.index') }}" method="GET">
             <!-- 商品名検索 -->
             <div class="form-group">
-                <input type="text" name="keyword" class="form-control" placeholder="商品名で検索" value="{{ request('keyword') }}">
+                <input type="text" id="keyword" name="keyword" class="form-control" 
+                    placeholder="商品名で検索" value="{{ request('keyword') }}">
             </div>
-            
+
             <!-- メーカーセレクトボックス -->
             <div class="form-group">
-                <select name="company_id" class="form-control">
+                <select id="company_id" name="company_id" class="form-control">
                     <option value="">メーカーを選択</option>
                     @foreach($companies as $company)
                         <option value="{{ $company->id }}" {{ request('company_id') == $company->id ? 'selected' : '' }}>
@@ -32,16 +33,20 @@
                 </select>
             </div>
 
-            <!-- 価格（下限〜上限） -->
+            <!-- 価格 -->
             <div class="form-group d-flex mb-2">
-                <input type="number" name="price_min" id="price_min" class="form-control me-2" placeholder="価格（下限）" value="{{ request('price_min') }}">
-                <input type="number" name="price_max" id="price_max" class="form-control" placeholder="価格（上限）" value="{{ request('price_max') }}">
+                <input type="number" id="price_min" name="price_min" class="form-control me-2"
+                    placeholder="価格（下限）" value="{{ request('price_min') }}">
+                <input type="number" id="price_max" name="price_max" class="form-control"
+                    placeholder="価格（上限）" value="{{ request('price_max') }}">
             </div>
 
-            <!-- 在庫数（下限〜上限） -->
+            <!-- 在庫 -->
             <div class="form-group d-flex mb-3">
-                <input type="number" name="stock_min" id="stock_min" class="form-control me-2" placeholder="在庫数（下限）" value="{{ request('stock_min') }}">
-                <input type="number" name="stock_max" id="stock_max" class="form-control" placeholder="在庫数（上限）" value="{{ request('stock_max') }}">
+                <input type="number" id="stock_min" name="stock_min" class="form-control me-2"
+                    placeholder="在庫数（下限）" value="{{ request('stock_min') }}">
+                <input type="number" id="stock_max" name="stock_max" class="form-control"
+                    placeholder="在庫数（上限）" value="{{ request('stock_max') }}">
             </div>
             
             <button type="submit" class="btn btn-primary">検索</button>
@@ -124,33 +129,6 @@
                         alert('検索に失敗しました。');
                     }
                 });
-            });
-        });
-
-        // JavaScriptでクリック時にソートしてAjax送信
-        $(document).on('click', '.sortable', function () {
-            const sortColumn = $(this).data('sort');
-            const currentOrder = $(this).data('order');
-            const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
-
-            $(this).data('order', newOrder); // 次回クリック用に切り替えておく
-
-            const formData = $('#search-form').serializeArray(); // 検索フォームの内容取得
-            formData.push({ name: 'sort_column', value: sortColumn });
-            formData.push({ name: 'sort_order', value: newOrder });
-
-            $.ajax({
-                url: '{{ route("products.index") }}',
-                type: 'GET',
-                data: formData,
-                dataType: 'html',
-                success: function (response) {
-                    const newBody = $('<div>').html(response).find('#product-table-body').html();
-                    $('#product-table-body').html(newBody);
-                },
-                error: function () {
-                    alert('ソートに失敗しました。');
-                }
             });
         });
 
